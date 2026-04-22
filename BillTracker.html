@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Bill Tracker</title>
+		<style>
+			body {
+				font-family: Arial, sans-serif;
+				line-height: 1.6;
+				margin: 0;
+				padding: 20px;
+				background-color: #f5f5f5;
+				color: #333;
+				min-height: 200vh;
+			}
+			.container {
+				max-width: 1000px;
+				margin: 0 auto;
+				background: white;
+				padding: 20px;
+				border-radius: 8px;
+				box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+				min-height: 150vh;
+			}
+			h1 {
+				text-align: center;
+				color: #2c3e50;
+				margin-bottom: 20px;
+			}
+			.tabs {
+				display: flex;
+				margin-bottom: 20px;
+				border-bottom: 1px solid #ddd;
+			}
+			.tab {
+				padding: 10px 20px;
+				cursor: pointer;
+				background-color: #f1f1f1;
+				border: 1px solid #ddd;
+				border-bottom: none;
+				border-radius: 5px 5px 0 0;
+				margin-right: 5px;
+			}
+			.tab.active {
+				background-color: white;
+				border-bottom: 2px solid white;
+				font-weight: bold;
+				color: #2980b9;
+			}
+			.tab-content {
+				display: none;
+				min-height: 75vh;
+			}
+			.tab-content.active {
+				display: block;
+			}
+			form {
+				margin-bottom: 20px;
+			}
+			.form-group {
+				margin-bottom: 15px;
+			}
+			label {
+				display: block;
+				margin-bottom: 5px;
+				font-weight: bold;
+			}
+			input,
+			select {
+				width: 100%;
+				padding: 8px;
+				border: 1px solid #ddd;
+				border-radius: 4px;
+				box-sizing: border-box;
+			}
+			button {
+				background-color: #2980b9;
+				color: white;
+				border: none;
+				padding: 10px 15px;
+				border-radius: 4px;
+				cursor: pointer;
+				font-size: 16px;
+			}
+			button:hover {
+				background-color: #3498db;
+			}
+			table {
+				width: 100%;
+				border-collapse: collapse;
+				margin-top: 20px;
+			}
+			th,
+			td {
+				padding: 12px;
+				text-align: left;
+				border-bottom: 1px solid #ddd;
+			}
+			th {
+				background-color: #f2f2f2;
+			}
+			.actions {
+				display: flex;
+				gap: 5px;
+			}
+			.delete-btn {
+				background-color: #e74c3c;
+				color: white;
+				border: none;
+				padding: 5px 10px;
+				border-radius: 4px;
+				cursor: pointer;
+			}
+			.paid-btn {
+				background-color: #27ae60;
+				color: white;
+				border: none;
+				padding: 5px 10px;
+				border-radius: 4px;
+				cursor: pointer;
+			}
+			.paid {
+				background-color: #e8f8f5;
+				color: #27ae60;
+			}
+			.overdue {
+				background-color: #fdedec;
+				color: #e74c3c;
+			}
+			.upcoming {
+				background-color: #fff9e6;
+				color: #f39c12;
+			}
+			.status-badge {
+				display: inline-block;
+				padding: 3px 8px;
+				border-radius: 12px;
+				font-size: 12px;
+				font-weight: bold;
+			}
+			.status-paid {
+				background-color: #e8f8f5;
+				color: #27ae60;
+			}
+			.status-overdue {
+				background-color: #fdedec;
+				color: #e74c3c;
+			}
+			.status-upcoming {
+				background-color: #fff9e6;
+				color: #f39c12;
+			}
+			.summary {
+				display: flex;
+				justify-content: space-between;
+				margin-top: 20px;
+				padding: 15px;
+				background-color: #f8f9fa;
+				border-radius: 5px;
+				padding: 25px 15px;
+			}
+			.summary-item {
+				text-align: center;
+			}
+			.summary-value {
+				font-size: 24px;
+				font-weight: bold;
+				margin: 5px 0;
+			}
+			.chart-container {
+				margin-top: 30px;
+				height: 400px;
+			}
+			.filter-section {
+				margin-bottom: 20px;
+				padding: 15px;
+				background-color: #f8f9fa;
+				border-radius: 5px;
+			}
+			.filter-row {
+				display: flex;
+				gap: 15px;
+				margin-bottom: 10px;
+			}
+			.filter-group {
+				flex: 1;
+			}
+			.empty-state {
+				text-align: center;
+				padding: 60px;
+				color: #7f8c8d;
+			}
+			.empty-state h3 {
+				margin-bottom: 10px;
+			}
+			.dashboard-section {
+				margin-bottom: 40px;
+			}
+			.edit-btn {
+				background-color: #f39c12;
+				color: white;
+				border: none;
+				padding: 5px 10px;
+				border-radius: 4px;
+				cursor: pointer;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="container">
+			<h1>Bill Tracker</h1>
+
+			<div class="tabs">
+				<div class="tab active" data-tab="dashboard">Dashboard</div>
+				<div class="tab" data-tab="add-bill">Add Bill</div>
+				<div class="tab" data-tab="bills">Bills</div>
+				<div class="tab" data-tab="reports">Reports</div>
+			</div>
+
+			<div id="dashboard" class="tab-content active">
+				<div class="summary">
+					<div class="summary-item">
+						<div>Total Due This Month</div>
+						<div class="summary-value" id="total-due">$0.00</div>
+					</div>
+					<div class="summary-item">
+						<div>Overdue</div>
+						<div class="summary-value" id="total-overdue">$0.00</div>
+					</div>
+					<div class="summary-item">
+						<div>Paid This Month</div>
+						<div class="summary-value" id="total-paid">$0.00</div>
+					</div>
+				</div>
+
+				<h2>Upcoming Bills</h2>
+				<div id="upcoming-bills-table">
+					<div class="empty-state">
+						<h3>No upcoming bills</h3>
+						<p>Add bills to see them here</p>
+					</div>
+				</div>
+
+				<h2>Monthly Breakdown</h2>
+				<div class="chart-container">
+					<canvas id="monthly-chart"></canvas>
+				</div>
+			</div>
+
+			<div id="add-bill" class="tab-content">
+				<h2>Add New Bill</h2>
+				<form id="bill-form">
+					<div class="form-group">
+						<label for="bill-name">Bill Name</label>
+						<input
+							type="text"
+							id="bill-name"
+							required
+							placeholder="e.g. Electricity"
+						/>
+					</div>
+
+					<div class="form-group">
+						<label for="bill-amount">Amount ($)</label>
+						<input
+							type="number"
+							id="bill-amount"
+							required
+							min="0.01"
+							step="0.01"
+							placeholder="0.00"
+						/>
+					</div>
+
+					<div class="form-group">
+						<label for="bill-category">Category</label>
+						<select id="bill-category" required>
+							<option value="">Select Category</option>
+							<option value="Utilities">Utilities</option>
+							<option value="Rent/Mortgage">Rent/Mortgage</option>
+							<option value="Insurance">Insurance</option>
+							<option value="Subscriptions">Subscriptions</option>
+							<option value="Internet/Phone">Internet/Phone</option>
+							<option value="Business">Business</option>
+							<option value="Other">Other</option>
+						</select>
+					</div>
+
+					<div class="form-group">
+						<label for="bill-due-date">Due Date</label>
+						<input type="date" id="bill-due-date" required />
+					</div>
+
+					<div class="form-group">
+						<label for="bill-recurring">Recurring</label>
+						<select id="bill-recurring" required>
+							<option value="No">No</option>
+							<option value="Monthly">Monthly</option>
+							<option value="Quarterly">Quarterly</option>
+							<option value="Annually">Annually</option>
+						</select>
+					</div>
+
+					<div class="form-group">
+						<label for="bill-notes">Notes (Optional)</label>
+						<input
+							type="text"
+							id="bill-notes"
+							placeholder="Add any additional details"
+						/>
+					</div>
+
+					<button type="submit">Add Bill</button>
+				</form>
+			</div>
+
+			<div id="bills" class="tab-content">
+				<h2>All Bills</h2>
+
+				<div class="filter-section">
+					<div class="filter-row">
+						<div class="filter-group">
+							<label for="filter-status">Status</label>
+							<select id="filter-status">
+								<option value="All">All</option>
+								<option value="Paid">Paid</option>
+								<option value="Unpaid">Unpaid</option>
+								<option value="Overdue">Overdue</option>
+							</select>
+						</div>
+						<div class="filter-group">
+							<label for="filter-category">Category</label>
+							<select id="filter-category">
+								<option value="All">All</option>
+								<option value="Utilities">Utilities</option>
+								<option value="Rent/Mortgage">Rent/Mortgage</option>
+								<option value="Insurance">Insurance</option>
+								<option value="Subscriptions">Subscriptions</option>
+								<option value="Internet/Phone">Internet/Phone</option>
+								<option value="Business">Business</option>
+								<option value="Other">Other</option>
+							</select>
+						</div>
+					</div>
+					<button id="apply-filters">Apply Filters</button>
+				</div>
+
+				<div id="bills-table-container">
+					<div class="empty-state">
+						<h3>No bills found</h3>
+						<p>Add bills to see them here</p>
+					</div>
+				</div>
+			</div>
+
+			<div id="reports" class="tab-content">
+				<h2>Reports</h2>
+
+				<div class="filter-section">
+					<div class="filter-row">
+						<div class="filter-group">
+							<label for="report-year">Year</label>
+							<select id="report-year">
+								<option value="2025">2025</option>
+								<option value="2024">2024</option>
+							</select>
+						</div>
+					</div>
+					<button id="generate-report">Generate Report</button>
+				</div>
+
+				<div class="chart-container">
+					<canvas id="category-chart"></canvas>
+				</div>
+
+				<div class="chart-container">
+					<canvas id="yearly-chart"></canvas>
+				</div>
+			</div>
+		</div>
+
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+		<script>
+			// Bill data will be stored here
+			let bills = JSON.parse(localStorage.getItem("bills")) || [];
+
+			// Current date for calculations
+			const currentDate = new Date();
+
+			// Initialize the application
+			document.addEventListener("DOMContentLoaded", function () {
+				// Set the minimum date for due date to today
+				document.getElementById("bill-due-date").valueAsDate = new Date();
+
+				// Tab navigation
+				const tabs = document.querySelectorAll(".tab");
+				tabs.forEach((tab) => {
+					tab.addEventListener("click", () => {
+						const tabId = tab.getAttribute("data-tab");
+
+						// Update active tab
+						tabs.forEach((t) => t.classList.remove("active"));
+						tab.classList.add("active");
+
+						// Show corresponding content
+						document.querySelectorAll(".tab-content").forEach((content) => {
+							content.classList.remove("active");
+						});
+						document.getElementById(tabId).classList.add("active");
+
+						// If dashboard tab selected, update dashboard
+						if (tabId === "dashboard") {
+							updateDashboard();
+						} else if (tabId === "bills") {
+							renderBillsTable();
+						} else if (tabId === "reports") {
+							renderReports();
+						}
+					});
+				});
+
+				// Form submission
+				document
+					.getElementById("bill-form")
+					.addEventListener("submit", function (e) {
+						e.preventDefault();
+						addBill();
+					});
+
+				// Filter application
+				document
+					.getElementById("apply-filters")
+					.addEventListener("click", renderBillsTable);
+
+				// Report generation
+				document
+					.getElementById("generate-report")
+					.addEventListener("click", renderReports);
+
+				// Initial rendering
+				updateDashboard();
+			});
+
+			// Add a new bill
+			function addBill() {
+				const name = document.getElementById("bill-name").value;
+				const amount = parseFloat(document.getElementById("bill-amount").value);
+				const category = document.getElementById("bill-category").value;
+				const dueDate = document.getElementById("bill-due-date").value;
+				const recurring = document.getElementById("bill-recurring").value;
+				const notes = document.getElementById("bill-notes").value;
+
+				const newBill = {
+					id: Date.now(),
+					name,
+					amount,
+					category,
+					dueDate,
+					recurring,
+					notes,
+					paid: false,
+					paidDate: null,
+				};
+
+				bills.push(newBill);
+				saveBills();
+
+				// Reset form
+				document.getElementById("bill-form").reset();
+
+				// Show success message
+				alert("Bill added successfully!");
+
+				// Switch to bills tab
+				document.querySelector('[data-tab="bills"]').click();
+			}
+
+			// Mark a bill as paid
+			function markAsPaid(id) {
+				const billIndex = bills.findIndex((bill) => bill.id === id);
+				if (billIndex !== -1) {
+					bills[billIndex].paid = true;
+					bills[billIndex].paidDate = new Date().toISOString().split("T")[0];
+					saveBills();
+
+					// Refresh current view
+					const activeTab = document
+						.querySelector(".tab.active")
+						.getAttribute("data-tab");
+					if (activeTab === "dashboard") {
+						updateDashboard();
+					} else if (activeTab === "bills") {
+						renderBillsTable();
+					}
+				}
+			}
+
+			// Edit a bill
+			function editBill(id) {
+				const bill = bills.find((b) => b.id === id);
+				if (!bill) return;
+
+				// Switch to Add Bill tab
+				document.querySelector('[data-tab="add-bill"]').click();
+
+				// Fill form with bill data
+				document.getElementById("bill-name").value = bill.name;
+				document.getElementById("bill-amount").value = bill.amount;
+				document.getElementById("bill-category").value = bill.category;
+				document.getElementById("bill-due-date").value = bill.dueDate;
+				document.getElementById("bill-recurring").value = bill.recurring;
+				document.getElementById("bill-notes").value = bill.notes;
+
+				// Remove the old bill on next submit
+				document.getElementById("bill-form").onsubmit = function (e) {
+					e.preventDefault();
+					deleteBill(id, false); // Remove without confirmation
+					addBill();
+					// Restore default submit
+					document.getElementById("bill-form").onsubmit = null;
+				};
+			}
+
+			// Delete a bill
+			function deleteBill(id, confirmDelete = true) {
+				if (
+					!confirmDelete ||
+					confirm("Are you sure you want to delete this bill?")
+				) {
+					bills = bills.filter((bill) => bill.id !== id);
+					saveBills();
+
+					// Refresh current view
+					const activeTab = document
+						.querySelector(".tab.active")
+						.getAttribute("data-tab");
+					if (activeTab === "dashboard") {
+						updateDashboard();
+					} else if (activeTab === "bills") {
+						renderBillsTable();
+					} else if (activeTab === "reports") {
+						renderReports();
+					}
+				}
+			}
+
+			// Save bills to localStorage
+			function saveBills() {
+				localStorage.setItem("bills", JSON.stringify(bills));
+			}
+
+			// Update dashboard
+			function updateDashboard() {
+				updateSummary();
+				renderUpcomingBills();
+				renderMonthlyChart();
+			}
+
+			// Update summary information
+			function updateSummary() {
+				const today = new Date();
+				const firstDayOfMonth = new Date(
+					today.getFullYear(),
+					today.getMonth(),
+					1
+				);
+				const lastDayOfMonth = new Date(
+					today.getFullYear(),
+					today.getMonth() + 1,
+					0
+				);
+
+				let totalDue = 0;
+				let totalOverdue = 0;
+				let totalPaid = 0;
+
+				bills.forEach((bill) => {
+					const dueDate = new Date(bill.dueDate);
+
+					// Check if bill is due this month
+					if (dueDate >= firstDayOfMonth && dueDate <= lastDayOfMonth) {
+						if (!bill.paid) {
+							totalDue += bill.amount;
+						} else {
+							totalPaid += bill.amount;
+						}
+					}
+
+					// Check if bill is overdue
+					if (!bill.paid && dueDate < today) {
+						totalOverdue += bill.amount;
+					}
+				});
+
+				document.getElementById("total-due").textContent = `$${totalDue.toFixed(
+					2
+				)}`;
+				document.getElementById(
+					"total-overdue"
+				).textContent = `$${totalOverdue.toFixed(2)}`;
+				document.getElementById(
+					"total-paid"
+				).textContent = `$${totalPaid.toFixed(2)}`;
+			}
+
+			// Render upcoming bills table
+			function renderUpcomingBills() {
+				const upcomingBillsElement = document.getElementById(
+					"upcoming-bills-table"
+				);
+				const today = new Date();
+				const nextMonth = new Date(today);
+				nextMonth.setMonth(today.getMonth() + 1);
+
+				// Filter for upcoming bills (due within the next 30 days and not paid)
+				const upcomingBills = bills.filter((bill) => {
+					const dueDate = new Date(bill.dueDate);
+					return !bill.paid && dueDate >= today && dueDate <= nextMonth;
+				});
+
+				// Sort by due date (closest first)
+				upcomingBills.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+
+				if (upcomingBills.length === 0) {
+					upcomingBillsElement.innerHTML = `
+                    <div class="empty-state">
+                        <h3>No upcoming bills</h3>
+                        <p>All caught up or add new bills to see them here</p>
+                    </div>
+                `;
+					return;
+				}
+
+				let tableHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Bill</th>
+                            <th>Amount</th>
+                            <th>Category</th>
+                            <th>Due Date</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+				upcomingBills.forEach((bill) => {
+					const dueDate = new Date(bill.dueDate);
+					const today = new Date();
+
+					let status = "Upcoming";
+					let statusClass = "status-upcoming";
+
+					if (dueDate < today) {
+						status = "Overdue";
+						statusClass = "status-overdue";
+					}
+
+					tableHTML += `
+                    <tr>
+                        <td>${bill.name}</td>
+                        <td>$${bill.amount.toFixed(2)}</td>
+                        <td>${bill.category}</td>
+                        <td>${formatDate(bill.dueDate)}</td>
+                        <td><span class="status-badge ${statusClass}">${status}</span></td>
+                        <td class="actions">
+    						<button class="paid-btn" onclick="markAsPaid(${bill.id})">Mark Paid</button>
+    						<button class="edit-btn" onclick="editBill(${bill.id})">Edit</button>
+    						<button class="delete-btn" onclick="deleteBill(${bill.id})">Delete</button>
+						</td>
+                    </tr>
+                `;
+				});
+
+				tableHTML += `
+                    </tbody>
+                </table>
+            `;
+
+				upcomingBillsElement.innerHTML = tableHTML;
+			}
+
+			// Render bills table with filtering
+			function renderBillsTable() {
+				const billsTableContainer = document.getElementById(
+					"bills-table-container"
+				);
+				const statusFilter = document.getElementById("filter-status").value;
+				const categoryFilter = document.getElementById("filter-category").value;
+
+				let filteredBills = [...bills];
+
+				// Apply status filter
+				if (statusFilter === "Paid") {
+					filteredBills = filteredBills.filter((bill) => bill.paid);
+				} else if (statusFilter === "Unpaid") {
+					filteredBills = filteredBills.filter((bill) => !bill.paid);
+				} else if (statusFilter === "Overdue") {
+					const today = new Date();
+					filteredBills = filteredBills.filter((bill) => {
+						return !bill.paid && new Date(bill.dueDate) < today;
+					});
+				}
+
+				// Apply category filter
+				if (categoryFilter !== "All") {
+					filteredBills = filteredBills.filter(
+						(bill) => bill.category === categoryFilter
+					);
+				}
+
+				// Sort by due date (most recent first)
+				filteredBills.sort((a, b) => new Date(b.dueDate) - new Date(a.dueDate));
+
+				if (filteredBills.length === 0) {
+					billsTableContainer.innerHTML = `
+                    <div class="empty-state">
+                        <h3>No bills found</h3>
+                        <p>Try adjusting your filters or add new bills</p>
+                    </div>
+                `;
+					return;
+				}
+
+				let tableHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Bill</th>
+                            <th>Amount</th>
+                            <th>Category</th>
+                            <th>Due Date</th>
+                            <th>Recurring</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+				filteredBills.forEach((bill) => {
+					const dueDate = new Date(bill.dueDate);
+					const today = new Date();
+
+					let status = "Upcoming";
+					let statusClass = "status-upcoming";
+					let rowClass = "";
+
+					if (bill.paid) {
+						status = "Paid";
+						statusClass = "status-paid";
+						rowClass = "paid";
+					} else if (dueDate < today) {
+						status = "Overdue";
+						statusClass = "status-overdue";
+						rowClass = "overdue";
+					}
+
+					tableHTML += `
+                    <tr class="${rowClass}">
+                        <td>${bill.name}</td>
+                        <td>$${bill.amount.toFixed(2)}</td>
+                        <td>${bill.category}</td>
+                        <td>${formatDate(bill.dueDate)}</td>
+                        <td>${bill.recurring}</td>
+                        <td><span class="status-badge ${statusClass}">${status}</span></td>
+                        <td class="actions">
+    						<button class="paid-btn" onclick="markAsPaid(${bill.id})">Mark Paid</button>
+    						<button class="edit-btn" onclick="editBill(${bill.id})">Edit</button>
+    						<button class="delete-btn" onclick="deleteBill(${bill.id})">Delete</button>
+						</td>
+                    </tr>
+                `;
+				});
+
+				tableHTML += `
+                    </tbody>
+                </table>
+            `;
+
+				billsTableContainer.innerHTML = tableHTML;
+			}
+
+			// Render monthly expenses chart
+			function renderMonthlyChart() {
+				const ctx = document.getElementById("monthly-chart").getContext("2d");
+
+				// Get current year
+				const currentYear = new Date().getFullYear();
+
+				// Initialize monthly data
+				const monthlyData = Array(12).fill(0);
+				const monthlyPaidData = Array(12).fill(0);
+
+				// Calculate totals per month
+				bills.forEach((bill) => {
+					const dueDate = new Date(bill.dueDate);
+
+					// Only include bills from current year
+					if (dueDate.getFullYear() === currentYear) {
+						const month = dueDate.getMonth();
+
+						if (bill.paid) {
+							monthlyPaidData[month] += bill.amount;
+						} else {
+							monthlyData[month] += bill.amount;
+						}
+					}
+				});
+
+				// Destroy previous chart if it exists
+				if (window.monthlyChart) {
+					window.monthlyChart.destroy();
+				}
+
+				// Create new chart
+				window.monthlyChart = new Chart(ctx, {
+					type: "bar",
+					data: {
+						labels: [
+							"Jan",
+							"Feb",
+							"Mar",
+							"Apr",
+							"May",
+							"Jun",
+							"Jul",
+							"Aug",
+							"Sep",
+							"Oct",
+							"Nov",
+							"Dec",
+						],
+						datasets: [
+							{
+								label: "Unpaid",
+								data: monthlyData,
+								backgroundColor: "#e74c3c",
+							},
+							{
+								label: "Paid",
+								data: monthlyPaidData,
+								backgroundColor: "#27ae60",
+							},
+						],
+					},
+					options: {
+						responsive: true,
+						plugins: {
+							title: {
+								display: true,
+								text: `Monthly Bills for ${currentYear}`,
+							},
+							legend: {
+								position: "top",
+							},
+						},
+						scales: {
+							y: {
+								beginAtZero: true,
+								title: {
+									display: true,
+									text: "Amount ($)",
+								},
+							},
+						},
+					},
+				});
+			}
+
+			// Render reports
+			function renderReports() {
+				renderCategoryChart();
+				renderYearlyChart();
+			}
+
+			// Render category breakdown chart
+			function renderCategoryChart() {
+				const ctx = document.getElementById("category-chart").getContext("2d");
+				const selectedYear = document.getElementById("report-year").value;
+
+				// Initialize category data
+				const categories = [
+					"Utilities",
+					"Rent/Mortgage",
+					"Insurance",
+					"Subscriptions",
+					"Internet/Phone",
+					"Business",
+					"Other",
+				];
+				const categoryData = Array(categories.length).fill(0);
+
+				// Calculate totals per category for selected year
+				bills.forEach((bill) => {
+					const dueDate = new Date(bill.dueDate);
+
+					if (dueDate.getFullYear().toString() === selectedYear) {
+						const categoryIndex = categories.indexOf(bill.category);
+						if (categoryIndex !== -1) {
+							categoryData[categoryIndex] += bill.amount;
+						}
+					}
+				});
+
+				// Destroy previous chart if it exists
+				if (window.categoryChart) {
+					window.categoryChart.destroy();
+				}
+
+				// Create new chart
+				window.categoryChart = new Chart(ctx, {
+					type: "doughnut",
+					data: {
+						labels: categories,
+						datasets: [
+							{
+								data: categoryData,
+								backgroundColor: [
+									"#3498db",
+									"#e74c3c",
+									"#2ecc71",
+									"#f1c40f",
+									"#9b59b6",
+									"#e67e22",
+									"#34495e",
+								],
+							},
+						],
+					},
+					options: {
+						responsive: true,
+						plugins: {
+							title: {
+								display: true,
+								text: `Expenses by Category for ${selectedYear}`,
+							},
+							legend: {
+								position: "right",
+							},
+						},
+					},
+				});
+			}
+
+			// Render yearly expenses chart
+			function renderYearlyChart() {
+				const ctx = document.getElementById("yearly-chart").getContext("2d");
+				const selectedYear = document.getElementById("report-year").value;
+
+				// Initialize monthly data
+				const monthlyData = Array(12).fill(0);
+
+				// Calculate totals per month for selected year
+				bills.forEach((bill) => {
+					const dueDate = new Date(bill.dueDate);
+
+					if (dueDate.getFullYear().toString() === selectedYear) {
+						const month = dueDate.getMonth();
+						monthlyData[month] += bill.amount;
+					}
+				});
+
+				// Destroy previous chart if it exists
+				if (window.yearlyChart) {
+					window.yearlyChart.destroy();
+				}
+
+				// Create new chart
+				window.yearlyChart = new Chart(ctx, {
+					type: "line",
+					data: {
+						labels: [
+							"Jan",
+							"Feb",
+							"Mar",
+							"Apr",
+							"May",
+							"Jun",
+							"Jul",
+							"Aug",
+							"Sep",
+							"Oct",
+							"Nov",
+							"Dec",
+						],
+						datasets: [
+							{
+								label: "Monthly Total",
+								data: monthlyData,
+								borderColor: "#3498db",
+								backgroundColor: "rgba(52, 152, 219, 0.2)",
+								fill: true,
+								tension: 0.1,
+							},
+						],
+					},
+					options: {
+						responsive: true,
+						plugins: {
+							title: {
+								display: true,
+								text: `Monthly Expenses for ${selectedYear}`,
+							},
+						},
+						scales: {
+							y: {
+								beginAtZero: true,
+								title: {
+									display: true,
+									text: "Amount ($)",
+								},
+							},
+						},
+					},
+				});
+			}
+
+			// Helper function to format dates
+			function formatDate(dateString) {
+				const options = {year: "numeric", month: "short", day: "numeric"};
+				return new Date(dateString).toLocaleDateString(undefined, options);
+			}
+		</script>
+	</body>
+</html>
